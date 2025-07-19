@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Message Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f0f0f0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            position :relative;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: visible;
+            margin-top: 50px;
+        }
+
+        /* First page styles */
+        .main-page {
+            padding: 40px;
+        }
+
+        .icon-grid {
+            display: flex;
+            gap: 40px;
+            justify-content: flex-start;
+        }
+
+        .icon-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .icon-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .message-icon {
+            background-color: #ff5722;
+        }
+
+        .topup-icon {
+            background-color: #ffc107;
+        }
+
+        .icon-label {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* Second page styles */
+        .message-page {
+            display: none;
+            padding: 40px;
+        }
+
+        .tips-section {
+            margin-bottom: 40px;
+        }
+
+        .tips-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .tips-content {
+            color: #888;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .remaining-section {
+            margin-bottom: 40px;
+        }
+
+        .remaining-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .service-item {
+            margin-bottom: 30px;
+        }
+
+        .service-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .service-indicator {
+            width: 4px;
+            height: 20px;
+            background-color: #2196f3;
+            margin-right: 12px;
+            border-radius: 2px;
+        }
+
+        .service-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .service-description {
+            color: #888;
+            font-size: 14px;
+            margin-left: 16px;
+            margin-bottom: 12px;
+        }
+
+        .progress-container {
+            margin-left: 16px;
+            position: relative;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #2196f3;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 14px;
+            color: #2196f3;
+        }
+
+        .back-button {
+            position: absolute;
+            top: 10px;
+            left: -4em;
+            background: none;
+            border: none;
+            font-size: 25px;
+            cursor: pointer;
+            color: #333;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .back-button:hover {
+            background-color: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <style>
+        .microtek-header { background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%); border-bottom: 2px solid #34495e; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: 60px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .microtek-header-left { display: flex; align-items: center; gap: 20px; }
+        .microtek-logo { font-size: 18px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .microtek-header-right { display: flex; align-items: center; gap: 15px; }
+        .microtek-nav-tabs { display: flex; gap: 8px; }
+        .microtek-nav-tab { padding: 6px 10px; background: none; border: none; border-radius: 0; cursor: pointer; transition: color 0.3s ease; color: white; font-weight: 500; }
+        .microtek-nav-tab:hover { background: none; color: #d0e6fa; transform: none; }
+        .microtek-nav-tab.active { background: none; color: #ffd700; box-shadow: none; }
+        .microtek-user-info { display: flex; align-items: center; gap: 10px; color: white; }
+        .microtek-notification-icon { width: 24px; height: 24px; background: linear-gradient(135deg, #e74c3c, #c0392b); border-radius: 50%; position: relative; cursor: pointer; box-shadow: 0 2px 6px rgba(231,76,60,0.3); }
+        .microtek-notification-badge { position: absolute; top: -5px; right: -5px; background-color: #e74c3c; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; display: flex; align-items: center; justify-content: center; border: 2px solid white; }
+    </style>
+    <div class="microtek-header">
+        <div class="microtek-header-left">
+          <div class="microtek-logo" onclick="window.location.href='index.html'"><img src="./assets/microteklogosvg.svg" alt="MICROTEK"></div>
+          <div class="microtek-nav-tabs">
+            <button class="microtek-nav-tab" onclick="window.location.href='index.html'">My Plant</button>
+            <button class="microtek-nav-tab" onclick="window.location.href='function.html'">Function</button>
+          </div>
+        </div>
+        <div class="microtek-header-right">
+          <div class="microtek-user-info">
+            <button class="microtek-nav-tab" onclick="window.open('manual.html','_blank')">User Manual</button>
+            <div class="microtek-notification-icon" onclick="window.location.href='alerts.html'">
+              <div class="microtek-notification-badge">1</div>
+            </div>
+            <button class="microtek-nav-tab" onclick="window.location.href='profile.html'">Microtek123</button>
+          </div>
+        </div>
+    </div>
+    <div class="container">
+        <button class="back-button" onclick="goBack()" style="display: none;">←</button>
+        
+        <!-- First page -->
+        <div class="main-page" id="mainPage">
+            <div class="icon-grid">
+                <div class="icon-item" onclick="showMessagePage()">
+                    <div class="icon message-icon">✉</div>
+                    <div class="icon-label">Notify</div>
+                </div>
+                <div class="icon-item">
+                    <div class="icon topup-icon">$</div>
+                    <div class="icon-label">Add Credit</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Second page -->
+        <div class="message-page" id="messagePage">
+            <div class="remaining-section">
+                <div class="remaining-title">Remaining</div>
+                
+                <div class="service-item">
+                    <div class="service-header">
+                        <div class="service-indicator"></div>
+                        <div class="service-name">E-mail</div>
+                    </div>
+                    <div class="service-description">Free trial is available.</div>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 50%;"></div>
+                        </div>
+                        <div class="progress-text">Remaining: 250/Total: 500</div>
+                    </div>
+                </div>
+
+                <div class="service-item">
+                    <div class="service-header">
+                        <div class="service-indicator"></div>
+                        <div class="service-name">SMS</div>
+                    </div>
+                    <div class="service-description">Free trial available</div>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 100%;"></div>
+                        </div>
+                        <div class="progress-text">Remaining: 500/Total: 500</div>
+                    </div>
+                </div>
+
+                <div class="service-item">
+                    <div class="service-header">
+                        <div class="service-indicator"></div>
+                        <div class="service-name">Voice Call</div>
+                    </div>
+                    <div class="service-description">Free trial is available</div>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 80%;"></div>
+                        </div>
+                        <div class="progress-text">Remaining: 40/Total: 50</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showMessagePage() {
+            document.getElementById('mainPage').style.display = 'none';
+            document.getElementById('messagePage').style.display = 'block';
+            document.querySelector('.back-button').style.display = 'block';
+        }
+
+        function goBack() {
+            document.getElementById('messagePage').style.display = 'none';
+            document.getElementById('mainPage').style.display = 'block';
+            document.querySelector('.back-button').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

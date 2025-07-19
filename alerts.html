@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Panel Alerts</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f6fa;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .filters {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-group label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+            min-width: 120px;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: #555;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .table td {
+            padding: 15px 20px;
+            border-bottom: 1px solid #f1f3f4;
+            font-size: 14px;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .alert-name {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .device-info {
+            color: #666;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .importance-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .importance-badge.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .importance-badge.notice {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .importance-badge.failure {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .influence {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .action-icon {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            opacity: 0.6;
+        }
+
+        .action-icon:hover {
+            opacity: 1;
+        }
+
+        .check-link {
+            color: #007bff;
+            text-decoration: none;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .check-link:hover {
+            text-decoration: underline;
+        }
+
+        .timestamp {
+            color: #666;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .no-alerts {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 2% auto;
+            padding: 0;
+            width: 90%;
+            max-width: 1000px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            background: #f8f9fa;
+            padding: 20px 30px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .alert-overview {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .overview-left {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .overview-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .overview-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .overview-value {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .overview-device-id {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .problem-sections {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .problem-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .problem-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .problem-section p {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .time-distribution {
+            margin-bottom: 30px;
+        }
+
+        .time-distribution h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            position: relative;
+            height: 300px;
+        }
+
+        .chart-hours {
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+            height: 100%;
+            padding: 20px 0;
+        }
+
+        .chart-hour {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 4%;
+            position: relative;
+        }
+
+        .chart-bar {
+            background: #007bff;
+            width: 100%;
+            border-radius: 2px 2px 0 0;
+            margin-bottom: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .chart-bar.has-alert {
+            background: #dc3545;
+        }
+
+        .chart-bar:hover {
+            opacity: 0.8;
+        }
+
+        .chart-hour-label {
+            font-size: 10px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .chart-tooltip {
+            position: absolute;
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            display: none;
+            z-index: 1001;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 768px) {
+            .filters {
+                flex-wrap: wrap;
+            }
+            
+            .table-container {
+                overflow-x: auto;
+            }
+            
+            .table {
+                min-width: 800px;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 5% auto;
+            }
+
+            .alert-overview {
+                grid-template-columns: 1fr;
+            }
+
+            .overview-left {
+                grid-template-columns: 1fr;
+            }
+
+            .problem-sections {
+                grid-template-columns: 1fr;
+            }
+            
+        }
+        .delete-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .delete-modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .delete-modal-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 90%;
+            transform: translateY(-50px);
+            transition: transform 0.3s ease;
+        }
+
+        .delete-modal-overlay.active .delete-modal-container {
+            transform: translateY(0);
+        }
+
+        .delete-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .delete-modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .delete-modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #95a5a6;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .delete-modal-close:hover {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+        }
+
+        .delete-modal-body {
+            padding: 20px;
+        }
+
+        .delete-modal-message {
+            color: #7f8c8d;
+            line-height: 1.5;
+            margin: 0 0 20px 0;
+        }
+
+        .delete-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .delete-modal-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .delete-modal-btn-cancel {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            border: 1px solid #bdc3c7;
+        }
+
+        .delete-modal-btn-cancel:hover {
+            background-color: #d5dbdb;
+        }
+
+        .delete-modal-btn-confirm {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .delete-modal-btn-confirm:hover {
+            background-color: #c0392b;
+        }
+
+        /* Prevent body scroll when modal is open */
+        body.modal-open {
+            overflow: hidden;
+        }
+        .settings-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .settings-modal {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 600px;
+            position: relative;
+            animation: settingsSlideIn 0.3s ease-out;
+        }
+
+        @keyframes settingsSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .settings-modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .settings-modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0;
+        }
+
+        .settings-close-button {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .settings-close-button:hover {
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+
+        .settings-modal-body {
+            padding: 24px;
+        }
+
+        .settings-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+
+        .settings-item-left {
+            flex: 1;
+        }
+
+        .settings-item-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .settings-item-subtitle {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .settings-item-right {
+            margin-left: 16px;
+        }
+
+        .settings-revise-button {
+            background: none;
+            border: none;
+            color: #3b82f6;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .settings-revise-button:hover {
+            background-color: #eff6ff;
+            color: #2563eb;
+        }
+
+        .settings-modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .settings-authorize-button {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .settings-authorize-button:hover {
+            background-color: #2563eb;
+        }
+
+        .settings-demo-button {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- MICROTEK HEADER & SIDEBAR START -->
+    <style>
+        .microtek-header { background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%); border-bottom: 2px solid #34495e; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: 60px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .microtek-header-left { display: flex; align-items: center; gap: 20px; }
+        .microtek-logo { font-size: 18px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .microtek-nav-tabs { display: flex; gap: 8px; }
+        .microtek-nav-tab { padding: 6px 10px; background: none; border: none; border-radius: 0; cursor: pointer; transition: color 0.3s ease; color: white; font-weight: 500; }
+        .microtek-nav-tab:hover { background: none; color: #d0e6fa; transform: none; }
+        .microtek-nav-tab.active { background: none; color: #ffd700; box-shadow: none; }
+        .microtek-header-right { display: flex; align-items: center; gap: 15px; }
+        .microtek-user-info { display: flex; align-items: center; gap: 10px; color: white; }
+        .microtek-notification-icon { width: 24px; height: 24px; background: linear-gradient(135deg, #e74c3c, #c0392b); border-radius: 50%; position: relative; cursor: pointer; box-shadow: 0 2px 6px rgba(231,76,60,0.3); }
+        .microtek-notification-badge { position: absolute; top: -5px; right: -5px; background-color: #e74c3c; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; display: flex; align-items: center; justify-content: center; border: 2px solid white; }
+        .microtek-sidebar { position: fixed; top: 60px; left: 0; width: 180px; height: calc(100vh - 60px); background: linear-gradient(180deg, #34495e 0%, #2c3e50 100%); border-right: 2px solid #34495e; overflow-y: auto; z-index: 999; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
+        .microtek-sidebar-item { padding: 10px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease; color: #ecf0f1; font-size: 14px; }
+        .microtek-sidebar-item:hover { background-color: rgba(52,152,219,0.2); padding-left: 25px; }
+        .microtek-sidebar-item.active {
+            background: white !important;
+            color: #1976d2 !important;
+            border-left: 4px solid #2980b9;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+        }
+        .microtek-sidebar-item.active .microtek-sidebar-icon {
+            background-color: #1976d2 !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .microtek-sidebar-item:hover .microtek-sidebar-icon { background-color: #3498db; }
+        .microtek-main-content { margin-left: 180px; margin-top: 60px; padding: 20px; min-height: calc(100vh - 60px); }
+        </style>
+        <div class="microtek-header">
+          <div class="microtek-header-left">
+            <div class="microtek-logo" onclick="window.location.href='index.html'"><img src="./assets/microteklogosvg.svg" alt="MICROTEK"></div>
+            <div class="microtek-nav-tabs">
+              <button class="microtek-nav-tab">My Plant</button>
+              <button class="microtek-nav-tab" onclick="window.location.href='function.html'">Function</button>
+            </div>
+          </div>
+          <div class="microtek-header-right">
+            <div class="microtek-user-info">
+              <button class="microtek-nav-tab" onclick="window.open('manual.html','_blank')">User Manual</button>
+              <div class="microtek-notification-icon" onclick="window.location.href='alerts.html'">
+                <div class="microtek-notification-badge">1</div>
+              </div>
+              <button class="microtek-nav-tab" onclick="window.location.href='profile.html'">Microtek123</button>
+            </div>
+          </div>
+        </div>
+        <div class="microtek-sidebar" id="microtek-sidebar" style="display: flex; flex-direction: column; height: calc(100vh - 60px);">
+          <div class="microtek-sidebar-item" onclick="window.location.href='create.html'"><div class="microtek-sidebar-icon"></div><span>Create Plant</span></div>
+          <div class="microtek-sidebar-item" onclick="window.location.href='logger.html'"><div class="microtek-sidebar-icon"></div><span>Add a Logger</span></div>
+          <div class="microtek-sidebar-item" onclick="window.location.href='index.html'"><div class="microtek-sidebar-icon"></div><span>Overview</span></div>
+          <!-- <div class="microtek-sidebar-item"><div class="microtek-sidebar-icon"></div><span>Layout</span></div> -->
+          <div class="microtek-sidebar-item" onclick="window.location.href='plantdetails.html'"><div class="microtek-sidebar-icon"></div><span>Plant Details</span></div>
+          <div class="microtek-sidebar-item" onclick="window.location.href='devices.html'"><div class="microtek-sidebar-icon"></div><span>Device</span></div>
+          <!-- <div class="microtek-sidebar-item"><div class="microtek-sidebar-icon"></div><span>Authorization</span></div> -->
+          <div class="microtek-sidebar-item active" onclick="window.location.href='alerts.html'"><div class="microtek-sidebar-icon"></div><span>Alerts</span></div>
+          <div class="microtek-sidebar-item" onclick="window.location.href='export.html'"><div class="microtek-sidebar-icon"></div><span>Export</span></div>
+          <div class="microtek-sidebar-item" onclick="openSettingsModal()"><div class="microtek-sidebar-icon"></div><span>Plant Settings</span></div>
+          <div class="microtek-sidebar-item" onclick="showDeleteModal()"><div class="microtek-sidebar-icon"></div><span>Delete</span></div>
+          <div style="flex:1"></div>
+          <div class="microtek-sidebar-item" onclick="openSwitchPlantModal()" id="switchPlantSidebarBtn">
+            <div class="microtek-sidebar-icon"></div>
+            <span>Switch Plant</span>
+          </div>
+        </div>
+<!-- MICROTEK HEADER & SIDEBAR END -->
+<div class="microtek-main-content">
+    <div class="header">
+            <h1>Alerts</h1>
+        </div>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label>Device Type:</label>
+                <select id="deviceType" class="filter-select">
+                    <option value="all">All</option>
+                    <option value="inverter">Inverter</option>
+                    <option value="logger">Logger</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Importance:</label>
+                <select id="importance" class="filter-select">
+                    <option value="all">All</option>
+                    <option value="notice">Notice</option>
+                    <option value="warning">Warning</option>
+                    <option value="failure">Failure</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Time:</label>
+                <select id="timeFilter" class="filter-select">
+                    <option value="all">All</option>
+                    <option value="today">Today</option>
+                    <option value="3days">Past 3 Days</option>
+                    <option value="7days">Past 7 Days</option>
+                    <option value="10days">Past 10 Days</option>
+                    <option value="20days">Past 20 Days</option>
+                    <option value="30days">Past 30 Days</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Alert Name</th>
+                            <th>Device</th>
+                            <th>Importance</th>
+                            <th>Influence</th>
+                            <th>Push Approach</th>
+                            <th>Last Alert Time</th>
+                            <th>Operation</th>
+                        </tr>
+                    </thead>
+                    <tbody id="alertsTable">
+                        <!-- Alerts will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="no-alerts" id="noAlerts" style="display: none;">
+                No alerts found matching your criteria.
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="alertModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Alert Details</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="alert-overview">
+                    <div class="overview-left">
+                        <div class="overview-item">
+                            <span class="overview-label">Plant Name:</span>
+                            <span class="overview-value">Ashish</span>
+                        </div>
+                        <div class="overview-item">
+                            <span class="overview-label">Device Name:</span>
+                            <span class="overview-value" id="modalDeviceName">Inverter</span>
+                        </div>
+                        <div class="overview-item">
+                            <span class="overview-label">Influence:</span>
+                            <span class="overview-value" id="modalInfluence">Influence Production</span>
+                        </div>
+                        <div class="overview-item">
+                            <span class="overview-label">Importance:</span>
+                            <span class="overview-value" id="modalImportance">Warning</span>
+                        </div>
+                    </div>
+                    <div class="overview-right">
+                        <div class="overview-item">
+                            <span class="overview-label">SN:</span>
+                            <span class="overview-value overview-device-id" id="modalDeviceId">25E0X350R100010002</span>
+                        </div>
+                        <div class="overview-item">
+                            <span class="overview-label">Last Alert Time:</span>
+                            <span class="overview-value" id="modalLastTime">2025-06-17 14:19:10</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="problem-sections">
+                    <div class="problem-section">
+                        <h3>Problem Description</h3>
+                        <p id="problemDescription">--</p>
+                    </div>
+                    <div class="problem-section">
+                        <h3>Reasons & Solutions</h3>
+                        <p id="reasonsSolutions">--</p>
+                    </div>
+                </div>
+
+                <div class="time-distribution">
+                    <h3>Time Distribution</h3>
+                    <div class="chart-container">
+                        <div class="chart-hours" id="chartHours">
+                            <!-- Chart bars will be generated here -->
+                        </div>
+                        <div class="chart-tooltip" id="chartTooltip"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="deleteModal" class="delete-modal-overlay">
+        <div class="delete-modal-container">
+            <div class="delete-modal-header">
+                <h2 class="delete-modal-title">Sure to delete?</h2>
+                <button class="delete-modal-close" onclick="closeDeleteModal()">×</button>
+            </div>
+            <div class="delete-modal-body">
+                <p class="delete-modal-message">
+                    After the deletion, you will not be able to check any data. Continue?
+                </p>
+                <div class="delete-modal-actions">
+                    <button class="delete-modal-btn delete-modal-btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+                    <button class="delete-modal-btn delete-modal-btn-confirm" onclick="confirmDelete()">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="settings-modal-overlay" id="settingsModalOverlay" style="display: none;">
+        <div class="settings-modal">
+            <div class="settings-modal-header">
+                <h2 class="settings-modal-title">Plant Settings</h2>
+                <button class="settings-close-button" onclick="closeSettingsModal()">×</button>
+            </div>
+            
+            <div class="settings-modal-body">
+                <div class="settings-item">
+                    <div class="settings-item-left">
+                        <div class="settings-item-title">Calculation of Electric Energy</div>
+                        <div class="settings-item-subtitle">All Calculations</div>
+                    </div>
+                    <div class="settings-item-right">
+                        <button class="settings-revise-button" onclick="reviseCalculation()">Revise</button>
+                    </div>
+                </div>
+
+                <div class="settings-item">
+                    <div class="settings-item-left">
+                        <div class="settings-item-title">Data Source</div>
+                        <div class="settings-item-subtitle">Intelligent Selection</div>
+                    </div>
+                    <div class="settings-item-right">
+                        <button class="settings-revise-button" onclick="reviseDataSource()">Revise</button>
+                    </div>
+                </div>
+
+                <div class="settings-item">
+                    <div class="settings-item-left">
+                        <div class="settings-item-title">Plant Non-Working Time Setting</div>
+                        <div class="settings-item-subtitle">Off</div>
+                    </div>
+                    <div class="settings-item-right">
+                        <button class="settings-revise-button" onclick="reviseNonWorkingTime()">Revise</button>
+                    </div>
+                </div>
+
+                <div class="settings-item">
+                    <div class="settings-item-left">
+                        <div class="settings-item-title">Plant Authorization Restrictions</div>
+                        <div class="settings-item-subtitle">The restriction is turned on</div>
+                    </div>
+                    <div class="settings-item-right">
+                        <button class="settings-revise-button" onclick="reviseAuthorization()">Revise</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="settings-modal-footer">
+                <button class="settings-authorize-button" onclick="authorize()">Authorize</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const alertData = [
+            {
+                name: "Grid Loss",
+                device: "Inverter",
+                deviceId: "25E0X350R100010002",
+                importance: "warning",
+                influence: "Influence Production",
+                time: "2025-06-20 12:47:16"
+            },
+            {
+                name: "Input Undervoltage",
+                device: "Inverter",
+                deviceId: "25E0X350R100010002",
+                importance: "warning",
+                influence: "Influence Production",
+                time: "2025-06-17 14:19:10"
+            },
+            {
+                name: "AC Undervoltage",
+                device: "Inverter",
+                deviceId: "25E0X350R100010002",
+                importance: "warning",
+                influence: "Influence Production",
+                time: "2025-06-17 12:02:01"
+            },
+            {
+                name: "AC Undervoltage",
+                device: "Inverter",
+                deviceId: "24J0X1J0R100010003",
+                importance: "warning",
+                influence: "Influence Production",
+                time: "2025-06-13 10:08:42"
+            },
+            {
+                name: "Grid Loss",
+                device: "Inverter",
+                deviceId: "24J0X1J0R100010003",
+                importance: "warning",
+                influence: "Influence Production",
+                time: "2025-06-13 09:02:39"
+            },
+            {
+                name: "Grid Loss",
+                device: "Inverter",
+                deviceId: "24J0X1J0R100010003",
+                importance: "warning",
+                influence: "Influence Production",
+                time: "2025-05-22 15:50:55"
+            },
+            {
+                name: "Device Online",
+                device: "Logger",
+                deviceId: "LOG001A",
+                importance: "notice",
+                influence: "No Influence",
+                time: "2025-06-20 08:30:15"
+            },
+            {
+                name: "Self-check Passed",
+                device: "Inverter",
+                deviceId: "25E0X350R100010002",
+                importance: "notice",
+                influence: "No Influence",
+                time: "2025-06-19 06:00:00"
+            },
+            {
+                name: "Communication Failure",
+                device: "Logger",
+                deviceId: "LOG002B",
+                importance: "failure",
+                influence: "Influence Production",
+                time: "2025-06-18 16:45:30"
+            },
+            {
+                name: "Inverter Fault",
+                device: "Inverter",
+                deviceId: "24J0X1J0R100010003",
+                importance: "failure",
+                influence: "Influence Production",
+                time: "2025-06-15 11:22:18"
+            }
+        ];
+
+        let filteredAlerts = [...alertData];
+
+        // Alert descriptions and solutions
+        const alertDescriptions = {
+            "Grid Loss": {
+                description: "The inverter has lost connection to the electrical grid. This typically occurs when the grid voltage or frequency falls outside acceptable parameters, causing the inverter to shut down for safety reasons.",
+                solutions: "Check grid power supply and voltage levels. Verify all electrical connections are secure. Contact your utility provider if grid issues persist. Reset the inverter after grid power is restored."
+            },
+            "Input Undervoltage": {
+                description: "The DC input voltage from the solar panels is below the minimum operating threshold of the inverter. This can occur due to insufficient sunlight, panel shading, or wiring issues.",
+                solutions: "Check for panel shading or debris. Inspect DC wiring connections. Verify panel performance and orientation. Consider panel cleaning if necessary."
+            },
+            "AC Undervoltage": {
+                description: "The AC output voltage is below the acceptable range. This can be caused by grid issues, wiring problems, or inverter malfunctions.",
+                solutions: "Check AC wiring connections. Verify grid voltage stability. Inspect inverter AC output terminals. Contact technical support if issue persists."
+            },
+            "Device Online": {
+                description: "The device has successfully connected to the monitoring system and is communicating normally. This is a routine status notification.",
+                solutions: "No action required. This is a normal operational status indicating the device is functioning properly."
+            },
+            "Self-check Passed": {
+                description: "The inverter has completed its internal diagnostic routine and all systems are operating within normal parameters.",
+                solutions: "No action required. This indicates the inverter is functioning normally and all internal systems are operational."
+            },
+            "Communication Failure": {
+                description: "The device has lost communication with the monitoring system. This can be due to network issues, device malfunction, or power problems.",
+                solutions: "Check network connectivity. Verify power supply to the device. Restart the communication module. Contact technical support if communication cannot be restored."
+            },
+            "Inverter Fault": {
+                description: "A critical fault has been detected in the inverter system. This requires immediate attention to prevent damage and restore normal operation.",
+                solutions: "Immediately shut down the inverter. Check for visible damage or overheating. Verify all connections are secure. Contact certified technician for professional diagnosis and repair."
+            }
+        };
+
+        function generateRandomAlerts() {
+            const alertTypes = {
+                inverter: {
+                    notice: ["Self-check Passed", "Inverter Startup", "Inverter Shutdown"],
+                    warning: ["Grid Loss", "Input Undervoltage", "AC Undervoltage", "AC Overvoltage", "High Internal Temperature"],
+                    failure: ["Inverter Fault", "PV String Fault", "Hardware Failure", "Isolation Fault"]
+                },
+                logger: {
+                    notice: ["Device Online", "Time Sync Complete"],
+                    warning: ["Weak Signal", "Partial Data Loss"],
+                    failure: ["Device Offline", "Storage Full", "Communication Failure"]
+                }
+            };
+
+            const devices = {
+                inverter: ["25E0X350R100010002", "24J0X1J0R100010003", "28K5X2M0R100010004"],
+                logger: ["LOG001A", "LOG002B", "LOG003C"]
+            };
+
+            const newAlerts = [];
+            for (let i = 0; i < 5; i++) {
+                const deviceType = Math.random() > 0.6 ? 'inverter' : 'logger';
+                const importanceTypes = ['notice', 'warning', 'failure'];
+                const importance = importanceTypes[Math.floor(Math.random() * importanceTypes.length)];
+                const alertNames = alertTypes[deviceType][importance];
+                const alertName = alertNames[Math.floor(Math.random() * alertNames.length)];
+                const deviceId = devices[deviceType][Math.floor(Math.random() * devices[deviceType].length)];
+                
+                const now = new Date();
+                const randomDays = Math.floor(Math.random() * 7);
+                const randomHours = Math.floor(Math.random() * 24);
+                const randomMinutes = Math.floor(Math.random() * 60);
+                const alertTime = new Date(now.getTime() - (randomDays * 24 * 60 * 60 * 1000) - (randomHours * 60 * 60 * 1000) - (randomMinutes * 60 * 1000));
+                
+                newAlerts.push({
+                    name: alertName,
+                    device: deviceType.charAt(0).toUpperCase() + deviceType.slice(1),
+                    deviceId: deviceId,
+                    importance: importance,
+                    influence: (importance === 'notice') ? "No Influence" : "Influence Production",
+                    time: alertTime.toISOString().slice(0, 16).replace('T', ' ')
+                });
+            }
+            return newAlerts;
+        }
+
+        function renderTable() {
+            const tableBody = document.getElementById('alertsTable');
+            const noAlerts = document.getElementById('noAlerts');
+            
+            if (filteredAlerts.length === 0) {
+                tableBody.innerHTML = '';
+                noAlerts.style.display = 'block';
+                return;
+            }
+            
+            noAlerts.style.display = 'none';
+            
+            tableBody.innerHTML = filteredAlerts.map((alert, index) => `
+                <tr>
+                    <td>
+                        <div class="alert-name">${alert.name}</div>
+                    </td>
+                    <td>
+                        <div>${alert.device}</div>
+                        <div class="device-info">${alert.deviceId}</div>
+                    </td>
+                    <td>
+                        <span class="importance-badge ${alert.importance}">${alert.importance}</span>
+                    </td>
+                    <td class="influence">${alert.influence}</td>
+                    <td>
+                        <div class="actions">
+                            <span class="action-icon">📧</span>
+                            <span class="action-icon">📱</span>
+                            <span class="action-icon">📞</span>
+                        </div>
+                    </td>
+                    <td class="timestamp">${alert.time}</td>
+                    <td>
+                        <a href="#" class="check-link" onclick="openAlertModal(${index})">Check</a>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterAlerts() {
+            const deviceFilter = document.getElementById('deviceType').value;
+            const importanceFilter = document.getElementById('importance').value;
+            const timeFilter = document.getElementById('timeFilter').value;
+            
+            filteredAlerts = alertData.filter(alert => {
+                const deviceMatch = deviceFilter === 'all' || alert.device.toLowerCase() === deviceFilter;
+                const importanceMatch = importanceFilter === 'all' || alert.importance === importanceFilter;
+                
+                let timeMatch = true;
+                if (timeFilter !== 'all') {
+                    const alertDate = new Date(alert.time);
+                    const now = new Date();
+                    const diffDays = Math.floor((now - alertDate) / (1000 * 60 * 60 * 24));
+                    
+                    switch (timeFilter) {
+                        case 'today':
+                            timeMatch = diffDays === 0;
+                            break;
+                        case '3days':
+                            timeMatch = diffDays <= 3;
+                            break;
+                        case '7days':
+                            timeMatch = diffDays <= 7;
+                            break;
+                        case '10days':
+                            timeMatch = diffDays <= 10;
+                            break;
+                        case '20days':
+                            timeMatch = diffDays <= 20;
+                            break;
+                        case '30days':
+                            timeMatch = diffDays <= 30;
+                            break;
+                    }
+                }
+                
+                return deviceMatch && importanceMatch && timeMatch;
+            });
+            
+            renderTable();
+        }
+
+        function generateChart(alertName) {
+            const chartContainer = document.getElementById('chartHours');
+            const tooltip = document.getElementById('chartTooltip');
+            
+            // Generate random data for 24 hours
+            const hours = [];
+            for (let i = 0; i < 24; i++) {
+                const hasAlert = Math.random() > 0.8; // 20% chance of alert
+                const alertCount = hasAlert ? Math.floor(Math.random() * 5) + 1 : 0;
+                hours.push({
+                    hour: i,
+                    alertCount: alertCount,
+                    hasAlert: hasAlert
+                });
+            }
+            
+            const maxAlerts = Math.max(...hours.map(h => h.alertCount));
+            
+            chartContainer.innerHTML = hours.map(hourData => {
+                const height = maxAlerts > 0 ? (hourData.alertCount / maxAlerts) * 200 : 0;
+                const hourLabel = hourData.hour.toString().padStart(2, '0') + ':00';
+                
+                return `
+                    <div class="chart-hour" 
+                         onmouseover="showTooltip(event, '${hourLabel}', ${hourData.alertCount})"
+                         onmouseout="hideTooltip()">
+                        <div class="chart-bar ${hourData.hasAlert ? 'has-alert' : ''}" 
+                             style="height: ${height}px; min-height: ${height > 0 ? '2px' : '0'};">
+                        </div>
+                        <span class="chart-hour-label">${hourLabel}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showTooltip(event, time, count) {
+            const tooltip = document.getElementById('chartTooltip');
+            tooltip.innerHTML = `${time}: ${count} alert${count !== 1 ? 's' : ''}`;
+            tooltip.style.display = 'block';
+            tooltip.style.left = event.pageX + 10 + 'px';
+            tooltip.style.top = event.pageY - 30 + 'px';
+        }
+
+        function hideTooltip() {
+            document.getElementById('chartTooltip').style.display = 'none';
+        }
+
+        function openAlertModal(alertIndex) {
+            const alert = filteredAlerts[alertIndex];
+            const modal = document.getElementById('alertModal');
+            
+            // Populate modal with alert data
+            document.getElementById('modalTitle').textContent = alert.name;
+            document.getElementById('modalDeviceName').textContent = alert.device;
+            document.getElementById('modalInfluence').textContent = alert.influence;
+            document.getElementById('modalImportance').textContent = alert.importance;
+            document.getElementById('modalDeviceId').textContent = alert.deviceId;
+            document.getElementById('modalLastTime').textContent = alert.time;
+            
+            // Set problem description and solutions
+            const alertInfo = alertDescriptions[alert.name] || {
+                description: "Alert information not available.",
+                solutions: "Please contact technical support for assistance."
+            };
+            
+            document.getElementById('problemDescription').textContent = alertInfo.description;
+            document.getElementById('reasonsSolutions').textContent = alertInfo.solutions;
+            
+            // Generate the chart
+            generateChart(alert.name);
+            
+            // Show modal
+            modal.style.display = 'block';
+        }
+
+        function addRandomAlert() {
+            const newAlerts = generateRandomAlerts();
+            alertData.unshift(...newAlerts);
+            filterAlerts();
+        }
+
+        // Initialize
+        document.getElementById('deviceType').addEventListener('change', filterAlerts);
+        document.getElementById('importance').addEventListener('change', filterAlerts);
+        document.getElementById('timeFilter').addEventListener('change', filterAlerts);
+
+        // Modal event listeners
+        const modal = document.getElementById('alertModal');
+        const closeBtn = document.getElementsByClassName('close')[0];
+
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        renderTable();
+
+        // Add new alerts every 20 seconds
+        setInterval(addRandomAlert, 20000);
+        function showDeleteModal() {
+            const modal = document.getElementById('deleteModal');
+            
+            if (!modal) {
+                console.error('Delete modal not found');
+                return;
+            }
+            
+            // Show modal with animation
+            modal.style.display = 'flex';
+            document.body.classList.add('modal-open');
+            
+            // Trigger animation
+            setTimeout(() => {
+                modal.classList.add('active');
+            }, 10);
+        }
+
+        /**
+         * Close delete modal
+         */
+        function closeDeleteModal() {
+            const modal = document.getElementById('deleteModal');
+            
+            if (!modal) {
+                console.error('Delete modal not found');
+                return;
+            }
+            
+            // Hide modal with animation
+            modal.classList.remove('active');
+            
+            setTimeout(() => {
+                modal.style.display = 'none';
+                document.body.classList.remove('modal-open');
+            }, 300);
+        }
+
+        /**
+         * Confirm deletion
+         */
+        function confirmDelete() {
+            // Add your deletion logic here
+            console.log('Item deleted');
+            alert('Item has been deleted successfully!');
+            
+            // Close modal
+            closeDeleteModal();
+            
+            // You can add your API call here:
+            // fetch('/api/delete', {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify({ action: 'delete' })
+            // }).then(response => {
+            //     if (response.ok) {
+            //         location.reload();
+            //     }
+            // });
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('deleteModal');
+            
+            if (modal) {
+                // Close modal when clicking outside
+                modal.addEventListener('click', function(event) {
+                    if (event.target === modal) {
+                        closeDeleteModal();
+                    }
+                });
+            }
+            
+            // Close modal with Escape key
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape' && modal && modal.classList.contains('active')) {
+                    closeDeleteModal();
+                }
+            });
+        });
+        function openSettingsModal() {
+            document.getElementById('settingsModalOverlay').style.display = 'flex';
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModalOverlay').style.display = 'none';
+        }
+
+        function reviseCalculation() {
+            console.log('Revising Calculation of Electric Energy');
+        }
+
+        function reviseDataSource() {
+            console.log('Revising Data Source');
+        }
+
+        function reviseNonWorkingTime() {
+            console.log('Revising Plant Non-Working Time Setting');
+        }
+
+        function reviseAuthorization() {
+            console.log('Revising Plant Authorization Restrictions');
+        }
+
+        function authorize() {
+            console.log('Authorizing plant settings');
+            closeSettingsModal();
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('settingsModalOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeSettingsModal();
+            }
+        });
+    </script>
+    <div id="switchPlantModal" style="display:none; position:fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); z-index:9999; align-items:center; justify-content:center;">
+      <div style="background:#fff; padding:30px; border-radius:10px; min-width:300px;">
+        <h3>Choose a Plant</h3>
+        <ul id="plantList" style="list-style:none; padding:0;"></ul>
+        <button onclick="closeSwitchPlantModal()" class="btn-primary" style="margin-top:10px;">Close</button>
+      </div>
+    </div>
+    <style>
+    .plant-select-btn {
+      background: #fff;
+      color: #1976d2;
+      border: 2px solid #1976d2;
+      border-radius: 50px;
+      width: 100%;
+      padding: 6px 0;
+      margin-bottom: 12px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      box-shadow: 0 2px 8px rgba(25, 118, 210, 0.04);
+    }
+    .plant-select-btn.selected, .plant-select-btn:active {
+      background: #1976d2;
+      color: #fff;
+      border: 2px solid #1976d2;
+    }
+    .plant-select-btn:hover {
+      background: #e3eafc;
+      color: #1565c0;
+      border: 2px solid #1565c0;
+    }
+    #plantList {
+      max-height: 320px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    </style>
+    <script>
+    let selectedPlantBtn = null;
+    function openSwitchPlantModal() {
+        const plants = ['Delhi Solar Park', 'Mumbai Rooftop', 'Chennai Sunfields', 'Ahmedabad GreenGrid', 'Bangalore Powerhouse', 'Kolkata Rays', 'Hyderabad Surya', 'Pune Ujjwal', 'Jaipur Shakti', 'Lucknow Urja'];
+        const plantList = document.getElementById('plantList');
+        plantList.innerHTML = '';
+        selectedPlantBtn = null;
+        plants.forEach(name => {
+            const li = document.createElement('li');
+            li.style.margin = '10px 0';
+            const btn = document.createElement('button');
+            btn.className = 'plant-select-btn';
+            btn.textContent = name;
+            btn.onclick = function() {
+                if(selectedPlantBtn) selectedPlantBtn.classList.remove('selected');
+                btn.classList.add('selected');
+                selectedPlantBtn = btn;
+                selectPlant(name);
+            };
+            li.appendChild(btn);
+            plantList.appendChild(li);
+        });
+        document.getElementById('switchPlantModal').style.display = 'flex';
+    }
+    function closeSwitchPlantModal() {
+        document.getElementById('switchPlantModal').style.display = 'none';
+    }
+    function selectPlant(name) {
+        if(name==='Mumbai Rooftop') window.location.href='mumbaiPlant.html';
+    }
+    </script>
+</body>
+</html>

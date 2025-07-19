@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Panel Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="graph.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="microtek-sidebar" id="microtek-sidebar">
+        <div class="microtek-sidebar-item" onclick="window.location.href='create.html'"><div class="microtek-sidebar-icon"></div><span>Create Plant</span></div>
+        <div class="microtek-sidebar-item"><div class="microtek-sidebar-icon"></div><span>Add a Logger</span></div>
+        <div class="microtek-sidebar-item" onclick="window.location.href='structurecursor.html'"><div class="microtek-sidebar-icon"></div><span>Overview</span></div>
+        <div class="microtek-sidebar-item"><div class="microtek-sidebar-icon"></div><span>Layout</span></div>
+        <div class="microtek-sidebar-item" onclick="window.location.href='plantdetails.html'"><div class="microtek-sidebar-icon"></div><span>Plant Details</span></div>
+        <div class="microtek-sidebar-item"><div class="microtek-sidebar-icon"></div><span>Device</span></div>
+        <div class="microtek-sidebar-item"><div class="microtek-sidebar-icon"></div><span>Authorization</span></div>
+        <div class="microtek-sidebar-item" onclick="window.location.href='alerts.html'"><div class="microtek-sidebar-icon"></div><span>Alerts</span></div>
+        <div class="microtek-sidebar-item" onclick="window.location.href='export.html'"><div class="microtek-sidebar-icon"></div><span>Export</span></div>
+        <div class="microtek-sidebar-item"><div class="microtek-sidebar-icon"></div><span>Plant Settings</span></div>
+        <div class="microtek-sidebar-item"><div class="microtek-sidebar-icon"></div><span>Delete</span></div>
+    </div>
+
+    <div class="microtek-main-content">
+
+        <div class="header">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Production</div>
+                    <div class="stat-value" id="totalProduction">153.66Wh</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Self-used Ratio</div>
+                    <div class="stat-value" id="selfUsedRatio">96.96%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Grid Feed-in</div>
+                    <div class="stat-value" id="totalGridFeed">108.5MWh</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Anticipated Yield</div>
+                    <div class="stat-value" id="anticipatedYield">113.67M AUD</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Running Days</div>
+                    <div class="stat-value" id="runningDays">339</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">CO₂ Prevented</div>
+                    <div class="stat-value" id="co2Prevented">153.1t</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-header">
+                <h2 class="chart-title">24h Curve</h2>
+                <div class="chart-controls">
+                    <select class="date-selector" id="dateSelector">
+                        <option value="2024-01-01">2024-01-01</option>
+                        <option value="2024-01-02">2024-01-02</option>
+                        <option value="2024-01-03">2024-01-03</option>
+                    </select>
+                    <button class="btn-primary" onclick="showDataOverview()">Data Overview</button>
+                </div>
+            </div>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <span class="legend-dot production"></span>
+                    Production Power
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot consumption"></span>
+                    Consumption Power
+                </div>
+            </div>
+
+            <div class="chart-wrapper">
+                <canvas id="powerChart"></canvas>
+            </div>
+        </div>
+
+        <div class="controls-container">
+            <div class="control-group">
+                <h3>Chart Controls</h3>
+                <div class="input-group">
+                    <label for="timeRange">Time Range (hours):</label>
+                    <input type="range" id="timeRange" min="6" max="24" value="24" onchange="updateChart()">
+                    <span id="timeValue">24</span>
+                </div>
+                
+                <div class="input-group">
+                    <label for="maxProduction">Max Production Power (MW):</label>
+                    <input type="number" id="maxProduction" value="1.8" step="0.1" onchange="updateChart()">
+                </div>
+                
+                <div class="input-group">
+                    <label for="maxConsumption">Max Consumption Power (MW):</label>
+                    <input type="number" id="maxConsumption" value="0.8" step="0.1" onchange="updateChart()">
+                </div>
+                
+                <button class="btn-primary" onclick="resetChart()">Reset to Default</button>
+            </div>
+        </div>
+
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="card-header">
+                    <h3>Total Production</h3>
+                    <div class="card-value">394.62 kWh</div>
+                </div>
+                <div class="card-progress">
+                    <div class="progress-bar production-progress" style="width: 78%"></div>
+                </div>
+                <div class="card-detail">12h01:27 min</div>
+            </div>
+            
+            <div class="summary-card">
+                <div class="card-header">
+                    <h3>Total Consumption</h3>
+                    <div class="card-value">59.99 kWh</div>
+                </div>
+                <div class="card-progress">
+                    <div class="progress-bar consumption-progress" style="width: 45%"></div>
+                </div>
+                <div class="card-detail">12h01:52 min</div>
+                <div class="card-footer">Anticipated Yield 5.55K AUD</div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

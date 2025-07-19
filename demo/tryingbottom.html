@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energy Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+        }
+
+        .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .date-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            background-color: #f1f5f9;
+            color: #334155;
+        }
+
+        .date-display {
+            font-weight: 500;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .view-toggle {
+            display: flex;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        .view-btn {
+            padding: 8px 16px;
+            border: none;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .view-btn:last-child {
+            border-right: none;
+        }
+
+        .view-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .view-btn:hover:not(.active) {
+            background: #f1f5f9;
+        }
+
+        .parameters {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 20px;
+        }
+
+        .parameters h3 {
+            margin-bottom: 15px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .parameter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .parameter-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .parameter-checkbox {
+            width: 16px;
+            height: 16px;
+            accent-color: #3b82f6;
+        }
+
+        .parameter-label {
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            min-height: 400px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+
+        .no-data {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 400px;
+            color: #64748b;
+            font-size: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .controls {
+                justify-content: center;
+            }
+
+            .parameter-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1 class="title">Historical Data</h1>
+            <div class="controls">
+                <div class="date-nav">
+                    <button class="nav-btn" id="prevBtn">‹</button>
+                    <span class="date-display" id="dateDisplay">2025-06</span>
+                    <button class="nav-btn" id="nextBtn">›</button>
+                </div>
+                
+                <div class="view-toggle">
+                    <button class="view-btn active" data-view="Month">Month</button>
+                    <button class="view-btn" data-view="Year">Year</button>
+                    <button class="view-btn" data-view="Total">Total</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="parameters">
+            <h3>Parameters</h3>
+            <div class="parameter-grid">
+                <div class="parameter-item">
+                    <input type="checkbox" id="production" class="parameter-checkbox" checked>
+                    <label for="production" class="parameter-label">
+                        <span class="legend-dot" style="background-color: #3b82f6;"></span>Production
+                    </label>
+                </div>
+                <div class="parameter-item">
+                    <input type="checkbox" id="consumption" class="parameter-checkbox" checked>
+                    <label for="consumption" class="parameter-label">
+                        <span class="legend-dot" style="background-color: #ef4444;"></span>Consumption
+                    </label>
+                </div>
+                <div class="parameter-item">
+                    <input type="checkbox" id="gridFeedIn" class="parameter-checkbox">
+                    <label for="gridFeedIn" class="parameter-label">
+                        <span class="legend-dot" style="background-color: #10b981;"></span>Grid Feed In
+                    </label>
+                </div>
+                <div class="parameter-item">
+                    <input type="checkbox" id="energyPurchased" class="parameter-checkbox">
+                    <label for="energyPurchased" class="parameter-label">
+                        <span class="legend-dot" style="background-color: #f59e0b;"></span>Energy Purchased
+                    </label>
+                </div>
+                <div class="parameter-item">
+                    <input type="checkbox" id="selfUsedRatio" class="parameter-checkbox">
+                    <label for="selfUsedRatio" class="parameter-label">
+                        <span class="legend-dot" style="background-color: #8b5cf6;"></span>Self Used Ratio
+                    </label>
+                </div>
+                <div class="parameter-item">
+                    <input type="checkbox" id="anticipatedYield" class="parameter-checkbox">
+                    <label for="anticipatedYield" class="parameter-label">
+                        <span class="legend-dot" style="background-color: #06b6d4;"></span>Anticipated Yield
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-wrapper">
+                <canvas id="energyChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class EnergyDashboard {
+            constructor() {
+                this.currentYear = 2025;
+                this.currentMonth = 6; // June
+                this.viewType = 'Month';
+                this.chart = null;
+                
+                this.colors = {
+                    production: '#3b82f6',
+                    consumption: '#ef4444',
+                    gridFeedIn: '#10b981',
+                    energyPurchased: '#f59e0b',
+                    selfUsedRatio: '#8b5cf6',
+                    anticipatedYield: '#06b6d4'
+                };
+
+                // Sample data - replace with your actual data
+                this.sampleData = this.generateSampleData();
+                
+                this.init();
+            }
+
+            generateSampleData() {
+                const data = {
+                    daily: {},
+                    monthly: {},
+                    yearly: {}
+                };
+
+                // Generate daily data for 2024-2025
+                for (let year = 2024; year <= 2025; year++) {
+                    data.daily[year] = {};
+                    for (let month = 1; month <= 12; month++) {
+                        data.daily[year][month] = [];
+                        const daysInMonth = new Date(year, month, 0).getDate();
+                        
+                        for (let day = 1; day <= daysInMonth; day++) {
+                            // Generate realistic sample data
+                            const production = month >= 4 && month <= 9 ? 
+                                Math.random() * 5 : Math.random() * 2; // Higher in summer
+                            const consumption = 1 + Math.random() * 3;
+                            
+                            data.daily[year][month].push({
+                                day: day,
+                                production: Math.round(production * 100) / 100,
+                                consumption: Math.round(consumption * 100) / 100,
+                                gridFeedIn: Math.max(0, Math.round((production - consumption) * 100) / 100),
+                                energyPurchased: Math.max(0, Math.round((consumption - production) * 100) / 100),
+                                selfUsedRatio: production > 0 ? Math.round((Math.min(production, consumption) / production) * 100) : 0,
+                                anticipatedYield: Math.round(production * 1.1 * 100) / 100
+                            });
+                        }
+                    }
+                }
+
+                // Add some specific data for June 2025 to match your screenshot
+                if (data.daily[2025] && data.daily[2025][6]) {
+                    data.daily[2025][6][9] = { // Day 10
+                        day: 10,
+                        production: 4.5,
+                        consumption: 2.5,
+                        gridFeedIn: 2.0,
+                        energyPurchased: 0,
+                        selfUsedRatio: 56,
+                        anticipatedYield: 5.0
+                    };
+                    data.daily[2025][6][10] = { // Day 11
+                        day: 11,
+                        production: 4.3,
+                        consumption: 2.8,
+                        gridFeedIn: 1.5,
+                        energyPurchased: 0,
+                        selfUsedRatio: 65,
+                        anticipatedYield: 4.7
+                    };
+                    data.daily[2025][6][11] = { // Day 12
+                        day: 12,
+                        production: 3.4,
+                        consumption: 2.2,
+                        gridFeedIn: 1.2,
+                        energyPurchased: 0,
+                        selfUsedRatio: 65,
+                        anticipatedYield: 3.8
+                    };
+                    data.daily[2025][6][12] = { // Day 13
+                        day: 13,
+                        production: 0.7,
+                        consumption: 2.0,
+                        gridFeedIn: 0,
+                        energyPurchased: 1.3,
+                        selfUsedRatio: 100,
+                        anticipatedYield: 0.8
+                    };
+                }
+
+                return data;
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.updateDateDisplay();
+                this.renderChart();
+            }
+
+            setupEventListeners() {
+                // Navigation buttons
+                document.getElementById('prevBtn').addEventListener('click', () => this.navigatePrevious());
+                document.getElementById('nextBtn').addEventListener('click', () => this.navigateNext());
+
+                // View toggle buttons
+                document.querySelectorAll('.view-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => this.setViewType(e.target.dataset.view));
+                });
+
+                // Parameter checkboxes
+                document.querySelectorAll('.parameter-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', () => this.renderChart());
+                });
+            }
+
+            navigatePrevious() {
+                if (this.viewType === 'Month') {
+                    if (this.currentMonth === 1) {
+                        this.currentMonth = 12;
+                        this.currentYear--;
+                    } else {
+                        this.currentMonth--;
+                    }
+                } else if (this.viewType === 'Year') {
+                    this.currentYear--;
+                }
+                this.updateDateDisplay();
+                this.renderChart();
+            }
+
+            navigateNext() {
+                if (this.viewType === 'Month') {
+                    if (this.currentMonth === 12) {
+                        this.currentMonth = 1;
+                        this.currentYear++;
+                    } else {
+                        this.currentMonth++;
+                    }
+                } else if (this.viewType === 'Year') {
+                    this.currentYear++;
+                }
+                this.updateDateDisplay();
+                this.renderChart();
+            }
+
+            setViewType(viewType) {
+                this.viewType = viewType;
+                
+                // Update active button
+                document.querySelectorAll('.view-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.view === viewType);
+                });
+
+                this.updateDateDisplay();
+                this.renderChart();
+            }
+
+            updateDateDisplay() {
+                const display = document.getElementById('dateDisplay');
+                
+                if (this.viewType === 'Month') {
+                    display.textContent = `${this.currentYear}-${String(this.currentMonth).padStart(2, '0')}`;
+                } else if (this.viewType === 'Year') {
+                    display.textContent = this.currentYear;
+                } else {
+                    display.textContent = 'Total';
+                }
+            }
+
+            getSelectedParameters() {
+                const selected = {};
+                document.querySelectorAll('.parameter-checkbox').forEach(checkbox => {
+                    selected[checkbox.id] = checkbox.checked;
+                });
+                return selected;
+            }
+
+            getChartData() {
+                const selectedParams = this.getSelectedParameters();
+                let data = [];
+                let labels = [];
+
+                if (this.viewType === 'Month') {
+                    // Daily data for selected month
+                    const monthData = this.sampleData.daily[this.currentYear]?.[this.currentMonth] || [];
+                    data = monthData;
+                    labels = monthData.map(d => d.day);
+                } else if (this.viewType === 'Year') {
+                    // Monthly data for selected year
+                    data = [];
+                    labels = [];
+                    for (let month = 1; month <= 12; month++) {
+                        const monthData = this.sampleData.daily[this.currentYear]?.[month] || [];
+                        const monthTotal = {
+                            month: month,
+                            production: monthData.reduce((sum, d) => sum + d.production, 0),
+                            consumption: monthData.reduce((sum, d) => sum + d.consumption, 0),
+                            gridFeedIn: monthData.reduce((sum, d) => sum + d.gridFeedIn, 0),
+                            energyPurchased: monthData.reduce((sum, d) => sum + d.energyPurchased, 0),
+                            selfUsedRatio: monthData.length > 0 ? monthData.reduce((sum, d) => sum + d.selfUsedRatio, 0) / monthData.length : 0,
+                            anticipatedYield: monthData.reduce((sum, d) => sum + d.anticipatedYield, 0)
+                        };
+                        data.push(monthTotal);
+                        labels.push(new Date(2000, month - 1).toLocaleString('default', { month: 'short' }));
+                    }
+                } else {
+                    // Yearly data
+                    data = [];
+                    labels = [];
+                    for (let year = 2022; year <= 2025; year++) {
+                        let yearTotal = {
+                            year: year,
+                            production: 0,
+                            consumption: 0,
+                            gridFeedIn: 0,
+                            energyPurchased: 0,
+                            selfUsedRatio: 0,
+                            anticipatedYield: 0
+                        };
+
+                        let totalDays = 0;
+                        for (let month = 1; month <= 12; month++) {
+                            const monthData = this.sampleData.daily[year]?.[month] || [];
+                            yearTotal.production += monthData.reduce((sum, d) => sum + d.production, 0);
+                            yearTotal.consumption += monthData.reduce((sum, d) => sum + d.consumption, 0);
+                            yearTotal.gridFeedIn += monthData.reduce((sum, d) => sum + d.gridFeedIn, 0);
+                            yearTotal.energyPurchased += monthData.reduce((sum, d) => sum + d.energyPurchased, 0);
+                            yearTotal.selfUsedRatio += monthData.reduce((sum, d) => sum + d.selfUsedRatio, 0);
+                            yearTotal.anticipatedYield += monthData.reduce((sum, d) => sum + d.anticipatedYield, 0);
+                            totalDays += monthData.length;
+                        }
+                        
+                        if (totalDays > 0) {
+                            yearTotal.selfUsedRatio = yearTotal.selfUsedRatio / totalDays;
+                        }
+
+                        data.push(yearTotal);
+                        labels.push(year);
+                    }
+                }
+
+                return { data, labels, selectedParams };
+            }
+
+            renderChart() {
+                const ctx = document.getElementById('energyChart').getContext('2d');
+                const { data, labels, selectedParams } = this.getChartData();
+
+                if (this.chart) {
+                    this.chart.destroy();
+                }
+
+                const datasets = [];
+
+                Object.keys(selectedParams).forEach(param => {
+                    if (selectedParams[param]) {
+                        datasets.push({
+                            label: this.getParameterLabel(param),
+                            data: data.map(d => d[param] || 0),
+                            backgroundColor: this.colors[param],
+                            borderColor: this.colors[param],
+                            borderWidth: 1
+                        });
+                    }
+                });
+
+                this.chart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'kWh'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: this.getXAxisLabel()
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        }
+                    }
+                });
+            }
+
+            getParameterLabel(param) {
+                const labels = {
+                    production: 'Production',
+                    consumption: 'Consumption',
+                    gridFeedIn: 'Grid Feed In',
+                    energyPurchased: 'Energy Purchased',
+                    selfUsedRatio: 'Self Used Ratio (%)',
+                    anticipatedYield: 'Anticipated Yield'
+                };
+                return labels[param] || param;
+            }
+
+            getXAxisLabel() {
+                if (this.viewType === 'Month') return 'Day';
+                if (this.viewType === 'Year') return 'Month';
+                return 'Year';
+            }
+        }
+
+        // Initialize the dashboard when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new EnergyDashboard();
+        });
+    </script>
+</body>
+</html>

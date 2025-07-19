@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Dashboard - Clean Energy Monitoring</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            height: 100vh;
+        }
+
+        header {
+            background: white;
+            padding: 12px 20px;
+            box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .logo img {
+            height: 40px;
+            width: auto;
+        }
+
+        .nav-links {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            margin: 0 40px;
+            min-width: 0; /* Allow shrinking */
+        }
+
+        .nav-links ul {
+            display: flex;
+            list-style: none;
+            gap: 40px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .nav-links li a {
+            color: #333;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .customer-care {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+            color: #333;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .customer-care span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .whatsapp-icon {
+            width: 20px;
+            height: 20px;
+            filter: brightness(0) saturate(100%) invert(52%) sepia(95%) saturate(1352%) hue-rotate(87deg) brightness(119%) contrast(119%);
+        }
+
+        .container {
+            margin: 20px auto;
+            display: flex;
+            width: 90%;
+            max-width: 1200px;
+            height: 600px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .left-panel {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            max-height: 100%;
+            max-width: 50%;
+            height: auto;
+            overflow: hidden;
+        }
+
+        .left-panel img {
+            object-fit: contain;
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .right-panel {
+            flex-grow: 1;
+            padding: 60px 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .form-container {
+            width: 100%;
+            max-width: 350px;
+            margin: 0 auto;
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-header h2 {
+            color: #333;
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        .form-header p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #4a90e2;
+        }
+
+        .otp-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .otp-input {
+            flex: 1;
+        }
+
+        .otp-btn {
+            padding: 12px 16px;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+
+        .otp-btn:hover {
+            background: #357abd;
+        }
+
+        .otp-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .primary-btn {
+            width: 100%;
+            padding: 14px;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+
+        .primary-btn:hover {
+            background: #357abd;
+        }
+
+        .form-links {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .form-links a {
+            color: #4a90e2;
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin: 0 10px;
+        }
+
+        .form-links a:hover {
+            text-decoration: underline;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        .footer-microtek-compact {
+            background-color: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+            padding: 25px 0 15px 0;
+        }
+
+        .footer-container-microtek-compact {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .footer-content-microtek-compact {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .footer-section-microtek-compact h3 {
+            color: #333;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .footer-section-microtek-compact ul {
+            list-style: none;
+        }
+
+        .footer-section-microtek-compact li {
+            margin-bottom: 8px;
+        }
+
+        .footer-section-microtek-compact a {
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+            line-height: 1.5;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section-microtek-compact a:hover {
+            color: #e74c3c;
+        }
+
+        .footer-contact-info-microtek-compact {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .footer-contact-info-microtek-compact svg {
+            margin-right: 10px;
+            fill: #e74c3c;
+        }
+
+        .footer-social-microtek-compact {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .footer-social-microtek-compact a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+
+        .footer-social-microtek-compact a:hover {
+            background-color: #e74c3c;
+            border-color: #e74c3c;
+            transform: translateY(-2px);
+        }
+
+        .footer-social-microtek-compact a:hover svg {
+            fill: white;
+        }
+
+        .footer-social-microtek-compact svg {
+            width: 18px;
+            height: 18px;
+            fill: #666;
+            transition: fill 0.3s ease;
+        }
+
+        .footer-brand-microtek-compact {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .footer-tagline-microtek-compact {
+            background-color: #003366;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .footer-bottom-microtek-compact {
+            padding-top: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .footer-copyright-microtek-compact {
+            color: #666;
+            font-size: 13px;
+        }
+
+        .footer-legal-links-microtek-compact {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-legal-links-microtek-compact a {
+            color: #666;
+            text-decoration: none;
+            font-size: 13px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-legal-links-microtek-compact a:hover {
+            color: #e74c3c;
+        }
+
+        /* Mobile Collapsible Styles */
+        .footer-mobile-section-microtek-compact {
+            margin-bottom: 0;
+        }
+
+        .footer-mobile-toggle-microtek-compact {
+            display: none;
+            width: 100%;
+            background: none;
+            border: none;
+            padding: 18px 0;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            text-align: left;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .footer-mobile-toggle-microtek-compact:hover {
+            color: #e74c3c;
+        }
+
+        .footer-mobile-toggle-microtek-compact::after {
+            content: '—';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            font-weight: 300;
+            transition: transform 0.3s ease;
+        }
+
+        .footer-mobile-toggle-microtek-compact.active::after {
+            content: '+';
+            transform: translateY(-50%) rotate(45deg);
+        }
+
+        .footer-mobile-content-microtek-compact {
+            display: block;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        /* Desktop Styles */
+        @media (min-width: 769px) {
+            .footer-content-microtek-compact {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .footer-content-microtek-compact {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+            }
+
+            .footer-bottom-microtek-compact {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+
+            .footer-legal-links-microtek-compact {
+                justify-content: center;
+                gap: 15px;
+            }
+        }
+
+        /* Mobile Styles */
+        @media (max-width: 580px) {
+            .footer-container-microtek-compact {
+                padding: 0 16px;
+            }
+
+            .footer-content-microtek-compact {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+
+
+            .footer-section-microtek-compact h3 {
+                display: none;
+            }
+
+            .footer-mobile-toggle-microtek-compact {
+                display: block;
+            }
+
+            .footer-mobile-content-microtek-compact {
+                display: none;
+                max-height: 0;
+                padding: 0 0 20px 0;
+            }
+
+            .footer-mobile-content-microtek-compact.active {
+                display: block;
+                max-height: 500px;
+            }
+
+            .footer-section-microtek-compact ul {
+                margin-top: 0;
+            }
+
+            .footer-section-microtek-compact li {
+                margin-bottom: 12px;
+            }
+
+            .footer-section-microtek-compact a {
+                font-size: 15px;
+                color: #555;
+            }
+
+            .footer-contact-info-microtek-compact {
+                margin-bottom: 12px;
+                font-size: 15px;
+            }
+
+            .footer-social-microtek-compact {
+                margin-top: 20px;
+                justify-content: flex-start;
+            }
+
+            .footer-brand-microtek-compact {
+                margin: 25px 0;
+            }
+
+            .footer-tagline-microtek-compact {
+                font-size: 11px;
+                padding: 6px 14px;
+            }
+
+            .footer-copyright-microtek-compact {
+                font-size: 12px;
+            }
+
+            .footer-legal-links-microtek-compact a {
+                font-size: 12px;
+            }
+        }
+        /* Updated breakpoint from 768px to 900px */
+        @media (max-width: 900px) {
+            header {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px;
+            }
+
+            .nav-links {
+                margin: 0;
+                order: 2;
+            }
+
+            .nav-links ul {
+                flex-wrap: wrap;
+                gap: 20px;
+                justify-content: center;
+            }
+
+            .customer-care {
+                order: 1;
+                align-self: flex-end;
+            }
+
+            .container {
+                flex-direction: column;
+                height: auto;
+                width: 95%;
+            }
+            
+            .left-panel {
+                height: 200px;
+                padding: 20px;
+                max-width: 100%;
+            }
+            
+            .right-panel {
+                padding: 40px 30px;
+            }
+        }
+
+        /* Additional breakpoint for very narrow screens */
+        @media (max-width: 600px) {
+            .nav-links ul {
+                gap: 15px;
+            }
+            
+            .nav-links li a {
+                font-size: 14px;
+            }
+            
+            .customer-care {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="https://www.microtek.in/">
+                <img src="./assets/microteklogosvg.svg" alt="MICROTEK">
+            </a>
+        </div>
+        
+        <nav class="nav-links">
+            <ul>
+                <li><a href="https://www.microtek.in/about-us">About</a></li>
+                <li><a href="https://www.microtek.in/customer-care">Customer Care</a></li>
+                <li><a href="https://www.microtek.in/media">Media</a></li>
+                <li><a href="https://www.microtek.in/product/solar-solutions">Products</a></li>
+                <li><a href="https://www.microtek.in/store-locator">Store Locator</a></li>
+                <li><a href="https://www.microtek.in/e-shop">E-Shop</a></li>
+            </ul>
+        </nav>
+        
+        <div>
+            <a href="https://wa.me/7283838383" class="customer-care">
+                Customer Care
+                <span>
+                    <img src="./assets/whatsapplogosvg.svg" class="whatsapp-icon" > 7283838383
+                </span>
+            </a>
+        </div>
+    </header>
+    <div class="container">
+        <!-- Left Panel with Solar Image -->
+        <div class="left-panel">
+            <img src="./assets/microtekSolar.png" alt="Monitor your solar energy production, track savings, and optimize your clean energy usage with our comprehensive dashboard.">
+        </div>
+
+        <!-- Right Panel with Forms -->
+        <div class="right-panel">
+            <div class="form-container">
+                <!-- Login Form -->
+                <div id="loginForm" class="form-section">
+                    <div class="form-header">
+                        <h2>Welcome Back</h2>
+                        <p>Sign in to your solar dashboard</p>
+                    </div>
+                    
+                    <form>
+                        <div class="form-group">
+                            <label for="loginEmail">Email</label>
+                            <input type="email" id="loginEmail" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="loginPassword">Password</label>
+                            <input type="password" id="loginPassword" required>
+                        </div>
+                        
+                        <button type="submit" class="primary-btn">Sign In</button>
+                    </form>
+                    
+                    <div class="form-links">
+                        <a href="#" onclick="showRegisterForm()">Register</a>
+                        <a href="#" onclick="showForgotForm()">Forgot Password?</a>
+                    </div>
+                </div>
+
+                <!-- Register Form -->
+                <div id="registerForm" class="form-section hidden">
+                    <div class="form-header">
+                        <h2>Create Account</h2>
+                        <p>Join our solar community</p>
+                    </div>
+                    
+                    <form>
+                        <div class="form-group">
+                            <label for="registerName">Name</label>
+                            <input type="text" id="registerName" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="registerEmail">Email</label>
+                            <input type="email" id="registerEmail" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="registerOtp">OTP Verification</label>
+                            <div class="otp-container">
+                                <input type="text" id="registerOtp" class="otp-input" placeholder="Enter OTP" disabled>
+                                <button type="button" class="otp-btn" onclick="sendOTP('register')">Send</button>
+                            </div>
+                        </div>
+                        
+                        <div id="registerPasswordSection" class="hidden">
+                            <div class="form-group">
+                                <label for="registerPassword">Password</label>
+                                <input type="password" id="registerPassword" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="confirmPassword">Confirm Password</label>
+                                <input type="password" id="confirmPassword" required>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="primary-btn" onclick="completeRegistration()">Register</button>
+                    </form>
+                    
+                    <div class="form-links">
+                        <a href="#" onclick="showLoginForm()">Back to Login</a>
+                    </div>
+                </div>
+
+                <!-- Forgot Password Form -->
+                <div id="forgotForm" class="form-section hidden">
+                    <div class="form-header">
+                        <h2>Reset Password</h2>
+                        <p>Enter your email to receive OTP</p>
+                    </div>
+                    
+                    <form>
+                        <div class="form-group">
+                            <label for="forgotEmail">Email</label>
+                            <input type="email" id="forgotEmail" required>
+                        </div>
+                        
+                        <button type="button" class="primary-btn" onclick="sendOTP('forgot')">Send OTP</button>
+                    </form>
+                    
+                    <div class="form-links">
+                        <a href="#" onclick="showLoginForm()">Back to Login</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer class="footer-microtek-compact">
+        <div class="footer-container-microtek-compact">
+            <div class="footer-content-microtek-compact">
+                <!-- Products Section -->
+                <div class="footer-section-microtek-compact footer-mobile-section-microtek-compact">
+                    <h3>Products</h3>
+                    <button class="footer-mobile-toggle-microtek-compact" onclick="toggleSection(this)">Products</button>
+                    <div class="footer-mobile-content-microtek-compact">
+                        <ul>
+                            <li><a href="https://www.microtek.in/product/power-backup-solutions">Power Backup Solutions</a></li>
+                            <li><a href="https://www.microtek.in/product/critical-power-backup-solution">Critical Power Backup Solution</a></li>
+                            <li><a href="https://www.microtek.in/product/voltage-stabilizers">Voltage Stabilizers</a></li>
+                            <li><a href="https://www.microtek.in/product/solar-solutions">Solar Solutions</a></li>
+                            <li><a href="https://www.microtek.in/product/electricals">Electricals</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Services Section -->
+                <div class="footer-section-microtek-compact footer-mobile-section-microtek-compact">
+                    <h3>Services</h3>
+                    <button class="footer-mobile-toggle-microtek-compact" onclick="toggleSection(this)">Services</button>
+                    <div class="footer-mobile-content-microtek-compact">
+                        <ul>
+                            <li><a href="https://www.microtek.in/customer-care#product-registration">Product Registration</a></li>
+                            <li><a href="https://www.microtek.in/store-locator">Store Locator</a></li>
+                            <li><a href="https://www.microtek.in/customer-care/service-center-locator">Service Centre</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Quick Links Section -->
+                <div class="footer-section-microtek-compact footer-mobile-section-microtek-compact">
+                    <h3>Quick Links</h3>
+                    <button class="footer-mobile-toggle-microtek-compact" onclick="toggleSection(this)">Quick Links</button>
+                    <div class="footer-mobile-content-microtek-compact">
+                        <ul>
+                            <li><a href="https://www.microtek.in/about-us">About Us</a></li>
+                            <li><a href="https://www.microtek.in/careers">Careers</a></li>
+                            <li><a href="https://www.microtek.in/contact-us">Contact Us</a></li>
+                            <li><a href="https://www.microtek.in/media#e-catalogues">E-Catalogues</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Connect Section -->
+                <div class="footer-section-microtek-compact footer-mobile-section-microtek-compact">
+                    <h3>Connect</h3>
+                    <button class="footer-mobile-toggle-microtek-compact" onclick="toggleSection(this)">Connect with us</button>
+                    <div class="footer-mobile-content-microtek-compact">
+                        <div class="footer-contact-info-microtek-compact">
+                            <svg width="16" height="16" viewBox="0 0 24 24">
+                                <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/>
+                            </svg>
+                            +91-9711666444
+                        </div>
+                        
+                        <div class="footer-contact-info-microtek-compact">
+                            <svg width="16" height="16" viewBox="0 0 24 24">
+                                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                            </svg>
+                            ho@microtek.in
+                        </div>
+
+                        <div class="footer-social-microtek-compact">
+                            <a href="https://www.facebook.com/MicrotekOfficial" aria-label="Facebook">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                </svg>
+                            </a>
+                            <a href="https://twitter.com/MicrotekOfcl" aria-label="Twitter">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 1200 1227" fill="currentColor">
+                                    <path d="M682 563l510-563h-119l-443 487L224 0H0l543 604L32 1227h119l478-522 548 522h123L682 563z"/>
+                                  </svg>
+                                  
+                            </a>
+                            <a href="https://www.linkedin.com/company/microtekofficial" aria-label="LinkedIn">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                                </svg>
+                            </a>
+                            <a href="https://www.youtube.com/channel/UCbBs6cIkMn5cLg1q8U2TQyQ" aria-label="YouTube">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                                </svg>
+                            </a>
+                            <a href="https://www.instagram.com/MicrotekOfficial" aria-label="Instagram">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Section -->
+            <div class="footer-bottom-microtek-compact">
+                <div class="footer-copyright-microtek-compact">
+                    Copyright © 2025 Microtek. All Rights Reserved.
+                </div>
+                <div class="footer-legal-links-microtek-compact">
+                    <a href="https://www.microtek.in/terms-conditions">Terms & Conditions</a>
+                    <a href="https://www.microtek.in/refund-policy">Cancellation & Refund Policy</a>
+                    <a href="https://www.microtek.in/privacy-policy">Privacy Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script>
+        let otpSent = false;
+        let otpVerified = false;
+
+        function showLoginForm() {
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+            document.getElementById('forgotForm').classList.add('hidden');
+        }
+
+        function showRegisterForm() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.remove('hidden');
+            document.getElementById('forgotForm').classList.add('hidden');
+        }
+
+        function showForgotForm() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+            document.getElementById('forgotForm').classList.remove('hidden');
+        }
+
+        function sendOTP(type) {
+            const email = type === 'register' ? 
+                document.getElementById('registerEmail').value : 
+                document.getElementById('forgotEmail').value;
+            
+            if (!email) {
+                alert('Please enter your email address');
+                return;
+            }
+
+            // Simulate OTP sending
+            if (type === 'register') {
+                const otpInput = document.getElementById('registerOtp');
+                const sendBtn = document.querySelector('.otp-btn');
+                
+                otpInput.disabled = false;
+                sendBtn.textContent = 'Verify';
+                sendBtn.onclick = () => verifyOTP();
+                
+                // Add success message
+                const successMsg = document.createElement('div');
+                successMsg.className = 'success-message';
+                successMsg.textContent = 'OTP sent to your email!';
+                document.getElementById('registerForm').insertBefore(successMsg, document.getElementById('registerForm').children[1]);
+                
+                setTimeout(() => successMsg.remove(), 3000);
+            } else {
+                // For forgot password
+                const successMsg = document.createElement('div');
+                successMsg.className = 'success-message';
+                successMsg.textContent = 'OTP sent to your email! Please check your inbox.';
+                document.getElementById('forgotForm').insertBefore(successMsg, document.getElementById('forgotForm').children[1]);
+                
+                setTimeout(() => successMsg.remove(), 3000);
+            }
+        }
+
+        function verifyOTP() {
+            const otpValue = document.getElementById('registerOtp').value;
+            
+            if (!otpValue) {
+                alert('Please enter the OTP');
+                return;
+            }
+
+            // Simulate OTP verification
+            otpVerified = true;
+            document.getElementById('registerPasswordSection').classList.remove('hidden');
+            document.querySelector('.otp-btn').disabled = true;
+            document.querySelector('.otp-btn').textContent = 'Verified ✓';
+            
+            const successMsg = document.createElement('div');
+            successMsg.className = 'success-message';
+            successMsg.textContent = 'OTP verified! Please set your password.';
+            document.getElementById('registerForm').insertBefore(successMsg, document.getElementById('registerPasswordSection'));
+            
+            setTimeout(() => successMsg.remove(), 3000);
+        }
+
+        function completeRegistration() {
+            if (!otpVerified) {
+                alert('Please verify your OTP first');
+                return;
+            }
+
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (password !== confirmPassword) {
+                alert('Passwords do not match');
+                return;
+            }
+
+            // Simulate successful registration
+            alert('Registration successful! You can now login.');
+            showLoginForm();
+        }
+
+        // Handle form submissions
+        document.addEventListener('DOMContentLoaded', function() {
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    if (this.closest('#loginForm')) {
+                        // Handle login
+                        const email = document.getElementById('loginEmail').value;
+                        const password = document.getElementById('loginPassword').value;
+                        
+                        if (email && password) {
+                            alert('Login successful! Redirecting to dashboard...');
+                        }
+                    } else if (this.closest('#registerForm')) {
+                        completeRegistration();
+                    }
+                });
+            });
+        });
+        function toggleSection(button) {
+            const content = button.nextElementSibling;
+            const isActive = content.classList.contains('active');
+            
+            // Close all sections
+            document.querySelectorAll('.footer-mobile-content-microtek-compact').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.querySelectorAll('.footer-mobile-toggle-microtek-compact').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Toggle current section
+            if (!isActive) {
+                content.classList.add('active');
+                button.classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>

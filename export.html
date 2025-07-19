@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Data Export</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            border-color: #007bff;
+            color: #007bff;
+        }
+
+        .btn.active {
+            border-color: #007bff;
+            background-color: #e3f2fd;
+            color: #007bff;
+        }
+
+        .device-list {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .device-list.show {
+            display: block;            
+        }
+        .deviceswrap{
+            display: flex;
+            gap:15px;
+            flex-wrap: wrap;
+        }
+        .device-item {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .device-item:hover {
+            border-color: #007bff;
+            background-color: #f8f9fa;
+        }
+
+        .device-item.selected {
+            border-color: #007bff;
+            background-color: #e3f2fd;
+        }
+
+        .device-id {
+            font-weight: 600;
+            color: #007bff;
+            font-size: 16px;
+        }
+
+        .device-type {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .date-range {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .date-input {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 150px;
+        }
+
+        .date-input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .tilde {
+            font-size: 18px;
+            color: #666;
+        }
+
+        .calendar-icon {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .export-section {
+            border-top: 1px solid #e0e0e0;
+            padding-top: 20px;
+            margin-top: 30px;
+        }
+
+        .export-info {
+            margin-bottom: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .export-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .export-btn:hover {
+            background: #0056b3;
+        }
+
+        .export-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
+            
+            .date-range {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .date-input {
+                width: 100%;
+            }
+        }
+        .delete-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .delete-modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .delete-modal-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 90%;
+            transform: translateY(-50px);
+            transition: transform 0.3s ease;
+        }
+
+        .delete-modal-overlay.active .delete-modal-container {
+            transform: translateY(0);
+        }
+
+        .delete-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .delete-modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .delete-modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #95a5a6;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .delete-modal-close:hover {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+        }
+
+        .delete-modal-body {
+            padding: 20px;
+        }
+
+        .delete-modal-message {
+            color: #7f8c8d;
+            line-height: 1.5;
+            margin: 0 0 20px 0;
+        }
+
+        .delete-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .delete-modal-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .delete-modal-btn-cancel {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            border: 1px solid #bdc3c7;
+        }
+
+        .delete-modal-btn-cancel:hover {
+            background-color: #d5dbdb;
+        }
+
+        .delete-modal-btn-confirm {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .delete-modal-btn-confirm:hover {
+            background-color: #c0392b;
+        }
+
+        /* Prevent body scroll when modal is open */
+        body.modal-open {
+            overflow: hidden;
+        }
+        .settings-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .settings-modal {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 600px;
+            position: relative;
+            animation: settingsSlideIn 0.3s ease-out;
+        }
+
+        @keyframes settingsSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .settings-modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .settings-modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0;
+        }
+
+        .settings-close-button {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .settings-close-button:hover {
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+
+        .settings-modal-body {
+            padding: 24px;
+        }
+
+        .settings-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+
+        .settings-item-left {
+            flex: 1;
+        }
+
+        .settings-item-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .settings-item-subtitle {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .settings-item-right {
+            margin-left: 16px;
+        }
+
+        .settings-revise-button {
+            background: none;
+            border: none;
+            color: #3b82f6;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .settings-revise-button:hover {
+            background-color: #eff6ff;
+            color: #2563eb;
+        }
+
+        .settings-modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .settings-authorize-button {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .settings-authorize-button:hover {
+            background-color: #2563eb;
+        }
+
+        .settings-demo-button {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- MICROTEK HEADER & SIDEBAR START -->
+    <style>
+        .microtek-header { background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%); border-bottom: 2px solid #34495e; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: 60px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .microtek-header-left { display: flex; align-items: center; gap: 20px; }
+        .microtek-logo { font-size: 18px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .microtek-nav-tabs { display: flex; gap: 8px; }
+        .microtek-nav-tab { padding: 6px 10px; background: none; border: none; border-radius: 0; cursor: pointer; transition: color 0.3s ease; color: white; font-weight: 500; }
+        .microtek-nav-tab:hover { background: none; color: #d0e6fa; transform: none; }
+        .microtek-nav-tab.active { background: none; color: #ffd700; box-shadow: none; }
+        .microtek-header-right { display: flex; align-items: center; gap: 15px; }
+        .microtek-user-info { display: flex; align-items: center; gap: 10px; color: white; }
+        .microtek-notification-icon { width: 24px; height: 24px; background: linear-gradient(135deg, #e74c3c, #c0392b); border-radius: 50%; position: relative; cursor: pointer; box-shadow: 0 2px 6px rgba(231,76,60,0.3); }
+        .microtek-notification-badge { position: absolute; top: -5px; right: -5px; background-color: #e74c3c; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; display: flex; align-items: center; justify-content: center; border: 2px solid white; }
+        .microtek-sidebar { position: fixed; top: 60px; left: 0; width: 180px; height: calc(100vh - 60px); background: linear-gradient(180deg, #34495e 0%, #2c3e50 100%); border-right: 2px solid #34495e; overflow-y: auto; z-index: 999; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
+        .microtek-sidebar-item { padding: 10px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease; color: #ecf0f1; font-size: 14px; }
+        .microtek-sidebar-item:hover { background-color: rgba(52,152,219,0.2); padding-left: 25px; }
+        .microtek-sidebar-item.active {
+            background: white !important;
+            color: #1976d2 !important;
+            border-left: 4px solid #2980b9;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+        }
+        .microtek-sidebar-item.active .microtek-sidebar-icon {
+            background-color: #1976d2 !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .microtek-sidebar-item:hover .microtek-sidebar-icon { background-color: #3498db; }
+        .microtek-main-content { margin-left: 180px; margin-top: 60px; padding: 20px; min-height: calc(100vh - 60px); }
+        </style>
+        <div class="microtek-header">
+          <div class="microtek-header-left">
+            <div class="microtek-logo" onclick="window.location.href='index.html'"><img src="./assets/microteklogosvg.svg" alt="MICROTEK"></div>
+            <div class="microtek-nav-tabs">
+              <button class="microtek-nav-tab">My Plant</button>
+              <button class="microtek-nav-tab" onclick="window.location.href='function.html'">Function</button>
+            </div>
+          </div>
+          <div class="microtek-header-right">
+            <div class="microtek-user-info">
+              <button class="microtek-nav-tab" onclick="window.open('manual.html','_blank')">User Manual</button>
+              <div class="microtek-notification-icon" onclick="window.location.href='alerts.html'">
+                <div class="microtek-notification-badge">1</div>
+              </div>
+              <button class="microtek-nav-tab" onclick="window.location.href='profile.html'">Microtek123</button>
+            </div>
+          </div>
+        </div>
+        <div class="microtek-sidebar" id="microtek-sidebar" style="display: flex; flex-direction: column; height: calc(100vh - 60px);">
+          <div class="microtek-sidebar-item" onclick="window.location.href='create.html'"><div class="microtek-sidebar-icon"></div><span>Create Plant</span></div>
+          <div class="microtek-sidebar-item" onclick="window.location.href='logger.html'"><div class="microtek-sidebar-icon"></div><span>Add a Logger</span></div>
+          <div class="microtek-sidebar-item" onclick="window.location.href='index.html'"><div class="microtek-sidebar-icon"></div><span>Overview</span></div>
+          <!-- <div class="microtek-sidebar-item"><div class="microtek-sidebar-icon"></div><span>Layout</span></div> -->
+          <div class="microtek-sidebar-item" onclick="window.location.href='plantdetails.html'"><div class="microtek-sidebar-icon"></div><span>Plant Details</span></div>
+          <div class="microtek-sidebar-item" onclick="window.location.href='devices.html'"><div class="microtek-sidebar-icon"></div><span>Device</span></div>
+          <!-- <div class="microtek-sidebar-item"><div class="microtek-sidebar-icon"></div><span>Authorization</span></div> -->
+          <div class="microtek-sidebar-item" onclick="window.location.href='alerts.html'"><div class="microtek-sidebar-icon"></div><span>Alerts</span></div>
+          <div class="microtek-sidebar-item active" onclick="window.location.href='export.html'"><div class="microtek-sidebar-icon"></div><span>Export</span></div>
+          <div class="microtek-sidebar-item" onclick="openSettingsModal()"><div class="microtek-sidebar-icon"></div><span>Plant Settings</span></div>
+          <div class="microtek-sidebar-item" onclick="showDeleteModal()"><div class="microtek-sidebar-icon"></div><span>Delete</span></div>
+          <div style="flex:1"></div>
+          <div class="microtek-sidebar-item" onclick="openSwitchPlantModal()" id="switchPlantSidebarBtn">
+            <div class="microtek-sidebar-icon"></div>
+            <span>Switch Plant</span>
+          </div>
+        </div>
+<!-- MICROTEK HEADER & SIDEBAR END -->
+<div class="microtek-main-content">
+    <div class="container">
+        <!-- Data Source Section -->
+        <div class="section">
+            <h2 class="section-title">Data Source</h2>
+            <div class="button-group">
+                <button class="btn active" id="plantDataBtn">Plant Data</button>
+                <button class="btn" id="deviceDataBtn">Device Data</button>
+            </div>
+            
+            <!-- Device Selection (Hidden by default) -->
+            <div class="device-list" id="deviceList">
+                <h3 class="section-title">Please select a device</h3>
+                <div class="deviceswrap">
+                    <div class="device-item" data-device="24J0X1J0R100010003">
+                        <div class="device-id">24J0X1J0R100010003</div>
+                        <div class="device-type">Inverter</div>
+                    </div>
+                    <div class="device-item" data-device="25E0X350R100010002">
+                        <div class="device-id">25E0X350R100010002</div>
+                        <div class="device-type">Inverter</div>
+                    </div>
+                    <div class="device-item" data-device="25E0X360R100010001">
+                        <div class="device-id">25E0X360R100010001</div>
+                        <div class="device-type">Inverter</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Type Section -->
+        <div class="section">
+            <h2 class="section-title">Data Type</h2>
+            <div class="button-group">
+                <button class="btn active" id="detailedDataBtn">Detailed Data</button>
+                <button class="btn" id="dailyStatsBtn">Daily Statistics</button>
+                <button class="btn" id="monthlyStatsBtn">Monthly Statistics</button>
+                <button class="btn" id="yearlyStatsBtn">Yearly Statistics</button>
+            </div>
+        </div>
+
+        <!-- Time Period Section -->
+        <div class="section">
+            <h2 class="section-title">Please select time period</h2>
+            <div class="date-range">
+                <input type="date" class="date-input" id="startDate" value="2025-06-25">
+                <span class="tilde">~</span>
+                <input type="date" class="date-input" id="endDate" value="2025-07-02">
+                <button class="calendar-icon" id="calendarBtn">📅</button>
+            </div>
+        </div>
+
+        <!-- Export Section -->
+        <div class="export-section">
+            <div class="export-info" id="exportInfo">
+                System is going to export the data. (Max. time span: 31 Days)
+            </div>
+            <button class="export-btn" id="exportBtn">Export Now</button>
+        </div>
+    </div>
+    <div id="deleteModal" class="delete-modal-overlay">
+        <div class="delete-modal-container">
+            <div class="delete-modal-header">
+                <h2 class="delete-modal-title">Sure to delete?</h2>
+                <button class="delete-modal-close" onclick="closeDeleteModal()">×</button>
+            </div>
+            <div class="delete-modal-body">
+                <p class="delete-modal-message">
+                    After the deletion, you will not be able to check any data. Continue?
+                </p>
+                <div class="delete-modal-actions">
+                    <button class="delete-modal-btn delete-modal-btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+                    <button class="delete-modal-btn delete-modal-btn-confirm" onclick="confirmDelete()">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="settings-modal-overlay" id="settingsModalOverlay" style="display: none;">
+        <div class="settings-modal">
+            <div class="settings-modal-header">
+                <h2 class="settings-modal-title">Plant Settings</h2>
+                <button class="settings-close-button" onclick="closeSettingsModal()">×</button>
+            </div>
+            
+            <div class="settings-modal-body">
+                <div class="settings-item">
+                    <div class="settings-item-left">
+                        <div class="settings-item-title">Calculation of Electric Energy</div>
+                        <div class="settings-item-subtitle">All Calculations</div>
+                    </div>
+                    <div class="settings-item-right">
+                        <button class="settings-revise-button" onclick="reviseCalculation()">Revise</button>
+                    </div>
+                </div>
+
+                <div class="settings-item">
+                    <div class="settings-item-left">
+                        <div class="settings-item-title">Data Source</div>
+                        <div class="settings-item-subtitle">Intelligent Selection</div>
+                    </div>
+                    <div class="settings-item-right">
+                        <button class="settings-revise-button" onclick="reviseDataSource()">Revise</button>
+                    </div>
+                </div>
+
+                <div class="settings-item">
+                    <div class="settings-item-left">
+                        <div class="settings-item-title">Plant Non-Working Time Setting</div>
+                        <div class="settings-item-subtitle">Off</div>
+                    </div>
+                    <div class="settings-item-right">
+                        <button class="settings-revise-button" onclick="reviseNonWorkingTime()">Revise</button>
+                    </div>
+                </div>
+
+                <div class="settings-item">
+                    <div class="settings-item-left">
+                        <div class="settings-item-title">Plant Authorization Restrictions</div>
+                        <div class="settings-item-subtitle">The restriction is turned on</div>
+                    </div>
+                    <div class="settings-item-right">
+                        <button class="settings-revise-button" onclick="reviseAuthorization()">Revise</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="settings-modal-footer">
+                <button class="settings-authorize-button" onclick="authorize()">Authorize</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let state = {
+            dataSource: 'plant',
+            selectedDevice: null,
+            dataType: 'detailed',
+            startDate: '2025-06-25',
+            endDate: '2025-07-02'
+        };
+
+        // DOM elements
+        const plantDataBtn = document.getElementById('plantDataBtn');
+        const deviceDataBtn = document.getElementById('deviceDataBtn');
+        const deviceList = document.getElementById('deviceList');
+        const deviceItems = document.querySelectorAll('.device-item');
+        const dataTypeButtons = document.querySelectorAll('.section:nth-child(2) .btn');
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
+        const exportInfo = document.getElementById('exportInfo');
+        const exportBtn = document.getElementById('exportBtn');
+        const calendarBtn = document.getElementById('calendarBtn');
+
+        // Data source selection
+        plantDataBtn.addEventListener('click', () => {
+            setActiveButton(plantDataBtn, [plantDataBtn, deviceDataBtn]);
+            deviceList.classList.remove('show');
+            state.dataSource = 'plant';
+            state.selectedDevice = null;
+            updateExportInfo();
+        });
+
+        deviceDataBtn.addEventListener('click', () => {
+            setActiveButton(deviceDataBtn, [plantDataBtn, deviceDataBtn]);
+            deviceList.classList.add('show');
+            state.dataSource = 'device';
+            updateExportInfo();
+        });
+
+        // Device selection
+        deviceItems.forEach(item => {
+            item.addEventListener('click', () => {
+                // Remove selection from all devices
+                deviceItems.forEach(d => d.classList.remove('selected'));
+                // Add selection to clicked device
+                item.classList.add('selected');
+                state.selectedDevice = item.dataset.device;
+                updateExportInfo();
+            });
+        });
+
+        // Data type selection
+        dataTypeButtons.forEach((btn, index) => {
+            btn.addEventListener('click', () => {
+                setActiveButton(btn, dataTypeButtons);
+                const types = ['detailed', 'daily', 'monthly', 'yearly'];
+                state.dataType = types[index];
+                updateExportInfo();
+            });
+        });
+
+        // Date inputs
+        startDateInput.addEventListener('change', (e) => {
+            state.startDate = e.target.value;
+            validateDateRange();
+            updateExportInfo();
+        });
+
+        endDateInput.addEventListener('change', (e) => {
+            state.endDate = e.target.value;
+            validateDateRange();
+            updateExportInfo();
+        });
+
+        // Calendar button (opens date picker)
+        calendarBtn.addEventListener('click', () => {
+            // Focus on start date input to open calendar
+            startDateInput.focus();
+            startDateInput.showPicker?.();
+        });
+
+        // Export button
+        exportBtn.addEventListener('click', () => {
+            if (isValidConfiguration()) {
+                // Simulate export process
+                exportBtn.disabled = true;
+                exportBtn.textContent = 'Exporting...';
+                
+                setTimeout(() => {
+                    alert('Data export completed successfully!');
+                    exportBtn.disabled = false;
+                    exportBtn.textContent = 'Export Now';
+                }, 2000);
+            } else {
+                alert('Please complete all required selections before exporting.');
+            }
+        });
+
+        // Helper functions
+        function setActiveButton(activeBtn, allButtons) {
+            allButtons.forEach(btn => btn.classList.remove('active'));
+            activeBtn.classList.add('active');
+        }
+
+        function validateDateRange() {
+            const start = new Date(state.startDate);
+            const end = new Date(state.endDate);
+            const diffTime = Math.abs(end - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays > 31) {
+                alert('Maximum time span is 31 days. Please adjust your date range.');
+                // Reset to valid range
+                const newEnd = new Date(start);
+                newEnd.setDate(start.getDate() + 31);
+                endDateInput.value = newEnd.toISOString().split('T')[0];
+                state.endDate = endDateInput.value;
+            }
+        }
+
+        function updateExportInfo() {
+            const start = new Date(state.startDate);
+            const end = new Date(state.endDate);
+            const diffTime = Math.abs(end - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            let info = `System is going to export the ${state.dataType} data`;
+            
+            if (state.dataSource === 'device' && state.selectedDevice) {
+                info += ` from device ${state.selectedDevice}`;
+            } else if (state.dataSource === 'device' && !state.selectedDevice) {
+                info += ` (Please select a device)`;
+            }
+            
+            info += `. (Max. time span: 31 Days, Selected: ${diffDays} Days)`;
+            
+            exportInfo.textContent = info;
+        }
+
+        function isValidConfiguration() {
+            if (state.dataSource === 'device' && !state.selectedDevice) {
+                return false;
+            }
+            
+            const start = new Date(state.startDate);
+            const end = new Date(state.endDate);
+            const diffTime = Math.abs(end - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            return diffDays <= 31;
+        }
+
+        // Initialize
+        updateExportInfo();
+        function showDeleteModal() {
+            const modal = document.getElementById('deleteModal');
+            
+            if (!modal) {
+                console.error('Delete modal not found');
+                return;
+            }
+            
+            // Show modal with animation
+            modal.style.display = 'flex';
+            document.body.classList.add('modal-open');
+            
+            // Trigger animation
+            setTimeout(() => {
+                modal.classList.add('active');
+            }, 10);
+        }
+
+        /**
+         * Close delete modal
+         */
+        function closeDeleteModal() {
+            const modal = document.getElementById('deleteModal');
+            
+            if (!modal) {
+                console.error('Delete modal not found');
+                return;
+            }
+            
+            // Hide modal with animation
+            modal.classList.remove('active');
+            
+            setTimeout(() => {
+                modal.style.display = 'none';
+                document.body.classList.remove('modal-open');
+            }, 300);
+        }
+
+        /**
+         * Confirm deletion
+         */
+        function confirmDelete() {
+            // Add your deletion logic here
+            console.log('Item deleted');
+            alert('Item has been deleted successfully!');
+            
+            // Close modal
+            closeDeleteModal();
+            
+            // You can add your API call here:
+            // fetch('/api/delete', {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify({ action: 'delete' })
+            // }).then(response => {
+            //     if (response.ok) {
+            //         location.reload();
+            //     }
+            // });
+        }
+        function openSettingsModal() {
+            document.getElementById('settingsModalOverlay').style.display = 'flex';
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModalOverlay').style.display = 'none';
+        }
+
+        function reviseCalculation() {
+            console.log('Revising Calculation of Electric Energy');
+        }
+
+        function reviseDataSource() {
+            console.log('Revising Data Source');
+        }
+
+        function reviseNonWorkingTime() {
+            console.log('Revising Plant Non-Working Time Setting');
+        }
+
+        function reviseAuthorization() {
+            console.log('Revising Plant Authorization Restrictions');
+        }
+
+        function authorize() {
+            console.log('Authorizing plant settings');
+            closeSettingsModal();
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('settingsModalOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeSettingsModal();
+            }
+        });
+    </script>
+    <!-- Switch Plant Modal -->
+    <div id="switchPlantModal" style="display:none; position:fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); z-index:9999; align-items:center; justify-content:center;">
+      <div style="background:#fff; padding:30px; border-radius:10px; min-width:300px;">
+        <h3>Choose a Plant</h3>
+        <ul id="plantList" style="list-style:none; padding:0;"></ul>
+        <button onclick="closeSwitchPlantModal()" class="btn-primary" style="margin-top:10px;">Close</button>
+      </div>
+    </div>
+    <style>
+    .plant-select-btn {
+      background: #fff;
+      color: #1976d2;
+      border: 2px solid #1976d2;
+      border-radius: 50px;
+      width: 100%;
+      padding: 6px 0;
+      margin-bottom: 12px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      box-shadow: 0 2px 8px rgba(25, 118, 210, 0.04);
+    }
+    .plant-select-btn.selected, .plant-select-btn:active {
+      background: #1976d2;
+      color: #fff;
+      border: 2px solid #1976d2;
+    }
+    .plant-select-btn:hover {
+      background: #e3eafc;
+      color: #1565c0;
+      border: 2px solid #1565c0;
+    }
+    #plantList {
+      max-height: 320px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    </style>
+    <script>
+    let selectedPlantBtn = null;
+    function openSwitchPlantModal() {
+        const plants = ['Delhi Solar Park', 'Mumbai Rooftop', 'Chennai Sunfields', 'Ahmedabad GreenGrid', 'Bangalore Powerhouse', 'Kolkata Rays', 'Hyderabad Surya', 'Pune Ujjwal', 'Jaipur Shakti', 'Lucknow Urja'];
+        const plantList = document.getElementById('plantList');
+        plantList.innerHTML = '';
+        selectedPlantBtn = null;
+        plants.forEach(name => {
+            const li = document.createElement('li');
+            li.style.margin = '10px 0';
+            const btn = document.createElement('button');
+            btn.className = 'plant-select-btn';
+            btn.textContent = name;
+            btn.onclick = function() {
+                if(selectedPlantBtn) selectedPlantBtn.classList.remove('selected');
+                btn.classList.add('selected');
+                selectedPlantBtn = btn;
+                selectPlant(name);
+            };
+            li.appendChild(btn);
+            plantList.appendChild(li);
+        });
+        document.getElementById('switchPlantModal').style.display = 'flex';
+    }
+    function closeSwitchPlantModal() {
+        document.getElementById('switchPlantModal').style.display = 'none';
+    }
+    function selectPlant(name) {
+        if(name==='Mumbai Rooftop') window.location.href='mumbaiPlant.html';
+    }
+    </script>
+</body>
+</html>
